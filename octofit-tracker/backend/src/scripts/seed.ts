@@ -41,7 +41,7 @@ export async function seed() {
     );
     const mona = await upsertDemoUser('Mona', 'mona@example.com', octocats._id, 'endurance');
     const hubot = await upsertDemoUser('Hubot', 'hubot@example.com', robocats._id, 'strength');
-    await upsertDemoUser('Copilot', 'copilot@example.com', codecats._id, 'mobility');
+    const copilot = await upsertDemoUser('Copilot', 'copilot@example.com', codecats._id, 'mobility');
 
     const monaRunAt = new Date('2026-01-10T12:00:00.000Z');
     const hubotCycleAt = new Date('2026-01-11T12:00:00.000Z');
@@ -53,6 +53,12 @@ export async function seed() {
     await Activity.updateOne(
       { user: hubot._id, team: robocats._id, type: 'cycle', occurredAt: hubotCycleAt },
       { $set: { user: hubot._id, team: robocats._id, type: 'cycle', minutes: 25, points: 25, occurredAt: hubotCycleAt } },
+      { upsert: true },
+    );
+    const copilotMobilityAt = new Date('2026-01-12T12:00:00.000Z');
+    await Activity.updateOne(
+      { user: copilot._id, team: codecats._id, type: 'mobility', occurredAt: copilotMobilityAt },
+      { $set: { user: copilot._id, team: codecats._id, type: 'mobility', minutes: 20, points: 20, occurredAt: copilotMobilityAt } },
       { upsert: true },
     );
     await Workout.updateOne(
