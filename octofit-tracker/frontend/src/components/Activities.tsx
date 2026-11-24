@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getJson } from '../api/client.js';
 
-type Activity = { type: string; minutes: number; points: number };
+type Activity = { type: string; minutes: number; points: number; occurredAt?: string };
 
 export default function Activities() {
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -21,7 +21,10 @@ export default function Activities() {
     {!loading && error && <p role="alert">{error}</p>}
     {!loading && !error && activities.length === 0 && <p>No activities yet.</p>}
     {!loading && !error && activities.length > 0 && <ul>{activities.map((activity, index) =>
-      <li key={index}>{activity.type} - {activity.minutes} minutes, {activity.points} points</li>
+      <li key={index}>
+        {activity.type} - {activity.minutes} minutes, {activity.points} points
+        {activity.occurredAt && <> - <time dateTime={activity.occurredAt}>{new Date(activity.occurredAt).toLocaleDateString()}</time></>}
+      </li>
     )}</ul>}
   </div></section>;
 }
