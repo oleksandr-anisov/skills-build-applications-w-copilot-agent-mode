@@ -28,22 +28,30 @@ OctoFit Tracker is a three-tier application for a school fitness program. The st
 
 ## Implementation decisions
 
-Record your plan here before editing code.
-
-- Presentation tier decision:
-- Logic tier decision:
-- Data tier decision:
-- Activity tracking approach:
-- Team management approach:
-- Leaderboard approach:
-- Workout suggestions approach:
+- Presentation tier decision: Use React components and React Router routes for the four capabilities. Route API access through `src/api/client.ts`, preserve `/api` paths for the Vite proxy, and render distinct loading, success, empty, and accessible error states in every view.
+- Logic tier decision: Keep Express route handlers thin and put validation and cross-model behavior in explicit service functions. Use deliberate `400`/`404` responses for invalid requests or missing resources rather than allowing Mongoose cast errors or unknown IDs to become `500` responses.
+- Data tier decision: Define required Mongoose fields and defaults in the model schemas, and use one shared database configuration for connections. Seed stable demo records with upserts and reconcile existing demo-user team memberships without removing unrelated data.
+- Activity tracking approach: Validate `type` and `minutes`, require well-formed existing `User` and `Team` ObjectIds, and let the service create the activity with positive computed points and an `occurredAt` timestamp. List activities without exposing extra business logic in the route.
+- Team management approach: Require a team name and mascot, default `members` to an empty array, and preserve submitted member ObjectIds. Reject a missing name with `400` and expose the team shape consistently in create and list responses.
+- Leaderboard approach: Aggregate activity `points` by team, sort descending, and add a 1-based rank only after sorting. Return `{ teamName, totalPoints, rank }` for each team.
+- Workout suggestions approach: Look up the user by decoded email, return `404` when no user exists, and derive the user's preferred focus from a recent activity pattern or `fitnessGoal`. Select matching workouts first and include a human-readable `reason` based on the matched activity or goal.
 
 ## Test plan
 
-Record the commands you run and what each failure means.
+Run the smallest relevant suite after each tier-level change, then run builds as final static checks.
 
-- Data-tier command: `npm run test:data --prefix octofit-tracker/backend`
-- API command: `npm run test:api --prefix octofit-tracker/backend`
-- Frontend command: `npm test --prefix octofit-tracker/frontend`
-- Backend build command: `npm run build --prefix octofit-tracker/backend`
-- Frontend build command: `npm run build --prefix octofit-tracker/frontend`
+| Check | Command | Current result | Meaning |
+| --- | --- | --- | --- |
+| Data contracts | `npm run test:data --prefix octofit-tracker/backend` | 4 failed, 1 passed | Mongoose validation is incomplete for `User`, `Team`, `Activity`, and `Workout`; the seed/idempotency contract currently passes. |
+| API contracts | `npm run test:api --prefix octofit-tracker/backend` | 4 failed | Activity and team creation, leaderboard aggregation, and workout suggestion details are not implemented. |
+| Frontend contracts | `npm test --prefix octofit-tracker/frontend` | 15 failed | Presentation data rendering and loading, empty, error, and workout-user request states are not implemented. |
+| Backend build | `npm run build --prefix octofit-tracker/backend` | Passed | TypeScript currently compiles; passing the build does not verify runtime contracts. |
+| Frontend build | `npm run build --prefix octofit-tracker/frontend` | Passed | React/Vite currently compile and bundle; passing the build does not verify the presentation contract tests. |
+
+Implementation verification order:
+
+1. Implement the data schemas and seed behavior, then run the data-tier suite.
+2. Implement backend services and route behavior, then rerun the API suite.
+3. Implement the shared frontend client usage and four capability views, then rerun the frontend suite.
+4. Run both build commands after the focused suites pass.
+5. Run `npm test --prefix octofit-tracker/backend` for a combined backend check only after both backend contract suites pass.
