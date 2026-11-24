@@ -6,6 +6,11 @@ export function createApp() {
   const app = express();
   app.use(cors());
   app.use(express.json());
+  app.get('/', (_request, response) => response.json({
+    name: 'OctoFit API',
+    health: '/health',
+    endpoints: ['/api/activities', '/api/teams', '/api/leaderboard', '/api/workouts/suggestions/:userEmail'],
+  }));
   app.get('/health', (_request, response) => response.json({ ok: true }));
   app.use('/api', apiRouter);
   app.use((error: Error & { status?: number }, _request: express.Request, response: express.Response, _next: express.NextFunction) => {
